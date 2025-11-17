@@ -31,8 +31,10 @@ useEffect(() => {
 }, []);
 
   const handleReschedule = async () => {
-  if (!selectedBooking) return;
-  const clientId = localStorage.getItem('clientId');
+  if (!rescheduleDate || !rescheduleTime) {
+  alert('Please select both new date and time');
+  return;
+}
   if (!clientId) return;
 
   try {

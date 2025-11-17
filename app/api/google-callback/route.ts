@@ -1,22 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { google } from 'googleapis';
 
-const CLIENT_ID = '1039678171151-jsqp4b77cpr6jp9u56152va0bgfqhi28.apps.googleusercontent.com';
-const CLIENT_SECRET = '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';
-const REDIRECT_URI = 'http://localhost:3000/api/google-callback';
-
-const oAuth2Client = new google.auth.OAuth2(
-  CLIENT_ID,
-  CLIENT_SECRET,
-  REDIRECT_URI
-);
-
 export async function GET(request: NextRequest) {
+  console.log('Client ID:', process.env.GOOGLE_CLIENT_ID);
+  console.log('Client Secret:', process.env.GOOGLE_CLIENT_SECRET);
+  console.log('Redirect URI:', process.env.GOOGLE_REDIRECT_URI); 
+  const oAuth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URI
+  );
+
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
 
+  // If no code yet, redirect user to Google consent screen
   if (!code) {
-    return NextResponse.json({ error: 'No code found in query params' });
+    const authUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: ['https://www.googleapis.com/auth/calendar'],
+      prompt: 'consent',
+    });
+
+    return NextResponse.redirect(authUrl);
   }
 
   try {

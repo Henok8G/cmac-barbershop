@@ -11,6 +11,7 @@ export async function GET() {
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://www.googleapis.com/auth/calendar'],
+    prompt: 'consent',
   });
 
   return NextResponse.redirect(authUrl);
