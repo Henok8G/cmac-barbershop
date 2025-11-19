@@ -1,10 +1,13 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
 export async function GET(request: NextRequest) {
+  // Debug environment variables
   console.log('Client ID:', process.env.GOOGLE_CLIENT_ID);
   console.log('Client Secret:', process.env.GOOGLE_CLIENT_SECRET);
-  console.log('Redirect URI:', process.env.GOOGLE_REDIRECT_URI); 
+  console.log('Redirect URI:', process.env.GOOGLE_REDIRECT_URI);
+
+  // Initialize Google OAuth client
   const oAuth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
@@ -14,7 +17,7 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
 
-  // If no code yet, redirect user to Google consent screen
+  // If no code, redirect user to Google consent screen
   if (!code) {
     const authUrl = oAuth2Client.generateAuthUrl({
       access_type: 'offline',
@@ -26,12 +29,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Exchange code for tokens
     const { tokens } = await oAuth2Client.getToken(code);
     oAuth2Client.setCredentials(tokens);
 
     console.log('✅ Google Tokens Received:', tokens);
 
-    // For testing — show success in browser
+    // Return success HTML page
     return new NextResponse(
       `<h1 style="font-family:sans-serif;color:#22c55e;text-align:center;margin-top:40px;">
         ✅ Google Calendar Connected Successfully!
@@ -44,6 +48,11 @@ export async function GET(request: NextRequest) {
 
   } catch (err) {
     console.error('❌ Error getting tokens:', err);
-    return NextResponse.json({ error: 'Failed to get access token' }, { status: 500 });
+
+    // Always return a JSON error response
+    return NextResponse.json(
+      { error: 'Failed to get access token', details: err instanceof Error ? err.message : err },
+      { status: 500 }
+    );
   }
 }
