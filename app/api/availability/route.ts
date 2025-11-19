@@ -1,27 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
-export async function GET() {
-  const oAuth2Client = new google.auth.OAuth2(
+// ---- MAIN HANDLER ----
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const date = searchParams.get('date');
+    const oAuth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
     process.env.GOOGLE_REDIRECT_URI
   );
-
+  if (!date) {
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://www.googleapis.com/auth/calendar'],
     prompt: 'consent',
   });
-
-  return NextResponse.redirect(authUrl);
-}
-
-
-// ---- MAIN HANDLER ----
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const date = searchParams.get('date');
+    return NextResponse.redirect(authUrl);
+  }
 
   if (!date) {
     return NextResponse.json({ error: 'Missing date parameter' }, { status: 400 });
