@@ -42,10 +42,6 @@ oAuth2Client.setCredentials({
   refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
 });
 
-oAuth2Client.setCredentials({
-  refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-});
-
 const calendar = google.calendar({
   version: "v3",
   auth: oAuth2Client,
