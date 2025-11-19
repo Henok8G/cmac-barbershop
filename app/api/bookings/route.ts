@@ -87,22 +87,22 @@ export async function PATCH(req: NextRequest) {
   const clientId = searchParams.get('clientId');
   const bookingId = searchParams.get('bookingId');
   let body;
-try {
-  await calendar.events.update({
+  try {
+    await calendar.events.update({
       calendarId: "primary",
-  eventId: booking.googleEventId,
-  requestBody: {
-    summary: `Barbershop: ${booking.service}`,
-    description: `Appointment for ${booking.name}`,
-    start: { dateTime: startDateTime, timeZone: "Africa/Addis_Ababa" },
-    end: { dateTime: endDateTime, timeZone: "Africa/Addis_Ababa" },
-  },
-  });
-  console.log('✅ Google Calendar event updated');
-} catch (err) {
-  console.error('❌ Failed to update Google Calendar:', err);
-  return NextResponse.json({ message: 'Failed to update Google Calendar', error: err }, { status: 500 });
-}
+      eventId: booking.googleEventId,
+      requestBody: {
+        summary: `Barbershop: ${booking.service}`,
+        description: `Appointment for ${booking.name}`,
+        start: { dateTime: startDateTime, timeZone: "Africa/Addis_Ababa" },
+        end: { dateTime: endDateTime, timeZone: "Africa/Addis_Ababa" },
+      },
+    });
+    console.log('✅ Google Calendar event updated');
+  } catch (err) {
+    console.error('❌ Failed to update Google Calendar:', err);
+    return NextResponse.json({ message: 'Failed to update Google Calendar', error: err }, { status: 500 });
+  }
 
   const { date, time } = body;
 
@@ -125,37 +125,37 @@ try {
   booking.date = date;
   booking.time = time;
 
-if (booking.googleEventId) {
-  try {
-    const oAuth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI
-    );
-   oAuth2Client.setCredentials({ refresh_token: "REPLACE_WITH_YOUR_TOKEN" });
+  if (booking.googleEventId) {
+    try {
+      const oAuth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        process.env.GOOGLE_REDIRECT_URI
+      );
+      oAuth2Client.setCredentials({ refresh_token: "REPLACE_WITH_YOUR_TOKEN" });
 
-    const calendar = google.calendar({ version: "v3", auth: oAuth2Client });
+      const calendar = google.calendar({ version: "v3", auth: oAuth2Client });
 
-    const startDateTime = new Date(`${date}T${time}`).toISOString();
-    const endDateTime = new Date(new Date(`${date}T${time}`).getTime() + 30*60*1000).toISOString();
+      const startDateTime = new Date(`${date}T${time}`).toISOString();
+      const endDateTime = new Date(new Date(`${date}T${time}`).getTime() + 30 * 60 * 1000).toISOString();
 
-    const updatedEvent = await calendar.events.update({
-      calendarId: "primary",
-      eventId: booking.googleEventId,
-      requestBody: {
-        summary: `Barbershop: ${booking.service}`,
-        description: `Appointment for ${booking.name}`,
-        start: { dateTime: startDateTime, timeZone: "Africa/Addis_Ababa" },
-        end: { dateTime: endDateTime, timeZone: "Africa/Addis_Ababa" },
-      },
-    });
+      const updatedEvent = await calendar.events.update({
+        calendarId: "primary",
+        eventId: booking.googleEventId,
+        requestBody: {
+          summary: `Barbershop: ${booking.service}`,
+          description: `Appointment for ${booking.name}`,
+          start: { dateTime: startDateTime, timeZone: "Africa/Addis_Ababa" },
+          end: { dateTime: endDateTime, timeZone: "Africa/Addis_Ababa" },
+        },
+      });
 
-    console.log('✅ Google Calendar event updated', updatedEvent.data.id);
-  } catch (err) {
-    console.error('❌ Failed to update Google Calendar:', err);
-    return NextResponse.json({ message: 'Failed to update Google Calendar', error: err }, { status: 500 });
+      console.log('✅ Google Calendar event updated', updatedEvent.data.id);
+    } catch (err) {
+      console.error('❌ Failed to update Google Calendar:', err);
+      return NextResponse.json({ message: 'Failed to update Google Calendar', error: err }, { status: 500 });
+    }
   }
-}
 
   return NextResponse.json({ message: 'Booking rescheduled successfully', booking });
 }
