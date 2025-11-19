@@ -56,8 +56,7 @@ const calendar = google.calendar({
   auth: oAuth2Client,
 });
 
-
-  for (const calendarId of barberCalendars) {
+   for (const calendarId of barberCalendars) {
     const events = await calendar.events.list({
       calendarId,
       timeMin: startOfDay.toISOString(),
