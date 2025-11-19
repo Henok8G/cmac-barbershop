@@ -16,10 +16,12 @@ export default function MyBookingPage() {
   const [rescheduleTime, setRescheduleTime] = useState('');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [clientId, setClientId] = useState<string | null>(null);
 
 useEffect(() => {
-  const clientId = localStorage.getItem('clientId');
-  if (!clientId) return;
+   const storedClientId = localStorage.getItem('clientId');
+    if (!storedClientId) return;
+    setClientId(storedClientId); 
 
   const fetchBookings = async () => {
     const res = await fetch(`/api/bookings?clientId=${clientId}`);
@@ -35,7 +37,7 @@ useEffect(() => {
   alert('Please select both new date and time');
   return;
 }
-  if (!clientId) return;
+  if (!clientId || !selectedBooking) return; 
 
   try {
     const res = await fetch(`/api/bookings?clientId=${clientId}&bookingId=${selectedBooking.id}`, {
@@ -63,7 +65,7 @@ useEffect(() => {
 
 
   const handleCancel = async (bookingId: string) => {
-  const clientId = localStorage.getItem('clientId');
+
   if (!clientId) return;
 
   try {
