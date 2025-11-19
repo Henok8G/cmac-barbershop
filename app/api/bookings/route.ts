@@ -161,13 +161,65 @@ if (booking.googleEventId) {
 }
 
 export async function GET(request: NextRequest) {
+  const oAuth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URI
+  );
+
   const { searchParams } = new URL(request.url);
-  const clientId = searchParams.get('clientId');
+  const date = searchParams.get('date');
 
-  if (!clientId) return NextResponse.json([], { status: 200 });
+  if (!date) {
+    // If no date, redirect to auth URL
+    const authUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: ['https://www.googleapis.com/auth/calendar'],
+      prompt: 'consent',
+    });
+    return NextResponse.redirect(authUrl);
+  }
 
-  const clientBookings = bookings.filter((b) => b.clientId === clientId);
-  return NextResponse.json(clientBookings);
+  // Example barber calendars
+  const barberCalendars = ['primary', 'barber1@gmail.com', 'barber2@gmail.com'];
+  const startOfDay = new Date(`${date}T00:00:00`);
+  const endOfDay = new Date(`${date}T23:59:59`);
+  const startHour = 9;
+  const endHour = 18;
+  const slotMinutes = 30;
+  const slots: Record<string, string[]> = {};
+
+  for (const calendarId of barberCalendars) {
+    const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
+    const events = await calendar.events.list({
+      calendarId,
+      timeMin: startOfDay.toISOString(),
+      timeMax: endOfDay.toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+    });
+
+    const busyTimes =
+      events.data.items?.map((e) => new Date(e.start?.dateTime || '').getTime()) || [];
+
+    const availableSlots: string[] = [];
+    for (let h = startHour; h < endHour; h++) {
+      for (let m = 0; m < 60; m += slotMinutes) {
+        const slot = new Date(date);
+        slot.setHours(h, m, 0, 0);
+        const isBusy = busyTimes.some(
+          (bt) => Math.abs(bt - slot.getTime()) < slotMinutes * 60 * 1000
+        );
+        if (!isBusy) {
+          availableSlots.push(slot.toTimeString().slice(0, 5));
+        }
+      }
+    }
+    slots[calendarId] = availableSlots;
+  }
+
+  return NextResponse.json(slots);
+}
 
 
 }
